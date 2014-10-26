@@ -59,6 +59,7 @@ class HexBug_t {
     boolean sequentialCommandsRequireIdle[NPINS];  //when repeating the same command, some commands need an idle and some don't
     
     unsigned long lastStateChange_millis;  //time of the start of the last command (or start of the last idle period
+    unsigned long millisOfLastCommand;
     int durationIdle_millis;       //minimum length of the idle period between commands
     int durationCommand_millis;        //duriation of a command
 
@@ -70,7 +71,8 @@ class HexBug_t {
       bufferedCommand = NO_COMMAND;
       lastStateChange_millis = millis();
       durationCommand_millis = 400;
-      durationIdle_millis = 400;
+      durationIdle_millis = 800;
+      millisOfLastCommand = millis();
     
       //initialize the pins
       pins[COMMAND_FOREWARD] = pinFWD;
@@ -159,19 +161,24 @@ class HexBug_t {
     }
   
     void parseCommandCharacter(char inChar) {
-      switch (inChar) {
-        case 'P':
-          issueCommand(COMMAND_FOREWARD); 
-          break;
-        case '{':
-          issueCommand(COMMAND_LEFT); 
-          break;
-        case '}':
-          issueCommand(COMMAND_RIGHT); 
-          break;
-        case '|':
-          issueCommand(COMMAND_FIRE); 
-          break;
+      if (inChar == 'P') issueCommand(COMMAND_FOREWARD);
+      if (inChar == '|') issueCommand(COMMAND_FIRE); 
+      if((millis() - millisOfLastCommand) > durationIdle_millis){
+        switch (inChar) {
+  //        case 'P':
+  //          issueCommand(COMMAND_FOREWARD); 
+  //          break;
+          case '{':
+            issueCommand(COMMAND_LEFT); 
+            break;
+          case '}':
+            issueCommand(COMMAND_RIGHT); 
+            break;
+  //        case '|':
+  //          issueCommand(COMMAND_FIRE); 
+  //          break;
+        }
+        millisOfLastCommand = millis();
       }
     }
     
